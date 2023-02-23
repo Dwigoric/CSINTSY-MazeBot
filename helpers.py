@@ -53,6 +53,6 @@ def get_euclidean_distances(maze, goal):
             if col == -1:
                 distances[row_idx][col_idx] = -1
             else:
-                distances[row_idx][col_idx] = round(math.dist([row_idx, col_idx], goal), 4)
+                distances[row_idx][col_idx] = math.dist([row_idx, col_idx], goal)
 
     return distances
