@@ -1,11 +1,12 @@
-import copy
-import math 
+from queue import Queue
+
 
 def disp_maze(maze):
     for row in maze:
         for col in row:
-            print(col, end=" ")
+            print(col, end="\t")
         print('\n')
+
 
 def read_maze(filename):
     with open(filename) as f:
@@ -14,45 +15,56 @@ def read_maze(filename):
         
     return size, maze
 
-'''
-    NOTE TO JOSHUA/RALPH:
 
-    Converting the text file into numerical values for the maze. Right now: 
+def flood_fill(txt_maze, goal):
+    # Implement breadth-first search
+    # to convert the maze to a distance map
+    # from the goal
+    q = Queue()
+    q.put(goal)
+    visited = set()
+    visited.add(goal)
 
-    > 0: empty (.), start (S), or goal (G), 
-    > -1: wall (#), 
+    distances = [[-1 for _ in range(len(txt_maze[0]))] for _ in range(len(txt_maze))]
+    curr_distance = 0
+    distances[goal[0]][goal[1]] = curr_distance
 
-    Feel free to change this to whatever is best for the algorithm!
-'''
-def convert_maze(txt_maze):
-    start, goal = None, None
-    converted = copy.deepcopy(txt_maze)
-    
-    for row_idx, row in enumerate(txt_maze):
-        for col_idx, col in enumerate(row):
+    while not q.empty():
+        curr = q.get()
+        curr_distance = distances[curr[0]][curr[1]]
 
-            if col == 'S':
-                start = [row_idx, col_idx]
-                converted[row_idx][col_idx] = 0
-            elif col == 'G':
-                goal = [row_idx, col_idx]
-                converted[row_idx][col_idx] = 0
-
-            elif col == '#':
-                converted[row_idx][col_idx] = -1
-            elif col == '.':
-                converted[row_idx][col_idx] = 0
-
-    return start, goal, converted
-
-def get_euclidean_distances(maze, goal):
-    distances = copy.deepcopy(maze)
-
-    for row_idx, row in enumerate(maze):
-        for col_idx, col in enumerate(row):
-            if col == -1:
-                distances[row_idx][col_idx] = -1
-            else:
-                distances[row_idx][col_idx] = math.dist([row_idx, col_idx], goal)
+        for neighbor in get_neighbors(curr, txt_maze):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                q.put(neighbor)
+                distances[neighbor[0]][neighbor[1]] = curr_distance + 1
 
     return distances
+
+
+def get_neighbors(node, maze):
+    neighbors = []
+    row, col = node
+    if row > 0 and maze[row - 1][col] != '#':
+        neighbors.append((row - 1, col))
+    if row < len(maze) - 1 and maze[row + 1][col] != '#':
+        neighbors.append((row + 1, col))
+    if col > 0 and maze[row][col - 1] != '#':
+        neighbors.append((row, col - 1))
+    if col < len(maze[0]) - 1 and maze[row][col + 1] != '#':
+        neighbors.append((row, col + 1))
+
+    return neighbors
+
+
+def find_start_goal(maze):
+    start, goal = None, None
+    for row_idx, row in enumerate(maze):
+        for col_idx, col in enumerate(row):
+            if col == 'S':
+                start = (row_idx, col_idx)
+            elif col == 'G':
+                goal = (row_idx, col_idx)
+
+            if start and goal:
+                return start, goal
