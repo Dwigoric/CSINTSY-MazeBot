@@ -16,7 +16,7 @@ def read_maze(filename):
     with open(filename) as f:
         size = f.readline()
         txtMaze = [[*line] for line in f]
-        
+
     return int(size), txtMaze
 
 
@@ -32,7 +32,7 @@ def find_path(maze, start, goal):
     Returns:
     - path_list: a list of tuples representing the path from start to goal
     """
-    
+
     q = Queue()
     q.put(start)
 
@@ -47,7 +47,7 @@ def find_path(maze, start, goal):
 
         if curr == goal:
             break
-        
+
         for neighbor in get_neighbors(curr, maze):
             if neighbor not in visited:
                 q.put(neighbor)
@@ -65,17 +65,18 @@ def find_path(maze, start, goal):
 
     return path_list
 
-def flood_fill(txt_maze, goal):
+
+def flood_fill(txt_maze, goal, distances):
     '''
     Implements breadth-first search to convert the maze to a distance map from the goal
 
     Inputs: 
     - txt_maze: a 2D list of characters representing the maze
-    - start: a tuple representing the start location
     - goal: a tuple representing the goal location
+    - distances: a 2D list of integers representing the initial distance from the goal
 
     Returns:
-    - distances: a 2D list of integers representing the distance from the goal
+    - distances: a 2D list of integers representing the flood-fill distance from the goal
     '''
 
     q = Queue()
@@ -84,7 +85,6 @@ def flood_fill(txt_maze, goal):
     visited = set()
     visited.add(goal)
 
-    distances = [[-1 for _ in range(len(txt_maze[0]))] for _ in range(len(txt_maze))]
     curr_distance = 0
     distances[goal[0]][goal[1]] = curr_distance
 
@@ -99,6 +99,7 @@ def flood_fill(txt_maze, goal):
                 distances[neighbor[0]][neighbor[1]] = curr_distance + 1
 
     return distances
+
 
 def get_neighbors(node, maze):
     '''
@@ -130,7 +131,7 @@ def get_neighbors(node, maze):
     return neighbors
 
 
-def find_start_goal(maze):
+def start_goal_distances(maze):
     '''
     Finds the start and goal locations in the maze
 
@@ -140,15 +141,24 @@ def find_start_goal(maze):
     Returns:
     - start: a tuple representing the start location
     - goal: a tuple representing the goal location
+    - distances: a 2D list of integers representing the distance from the goal
     '''
 
+    distances = [[-1 for _ in range(len(maze[0]))] for _ in range(len(maze))]
     start, goal = None, None
+
     for row_idx, row in enumerate(maze):
         for col_idx, col in enumerate(row):
             if col == 'S':
                 start = (row_idx, col_idx)
+                distances[row_idx][col_idx] = -1
             elif col == 'G':
                 goal = (row_idx, col_idx)
+                distances[row_idx][col_idx] = 0
+            elif col == '#':
+                distances[row_idx][col_idx] = -2
+            else:
+                distances[row_idx][col_idx] = -1
 
             if start and goal:
-                return start, goal
+                return start, goal, distances
