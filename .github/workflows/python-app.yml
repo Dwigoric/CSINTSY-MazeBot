@@ -7,16 +7,16 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    types:
-      - closed
+  # pull_request:
+  #   types:
+  #     - closed
 
 permissions:
   contents: read
 
 jobs:
   build:
-    if: ${{ github.event.pull_request.merged }}
+    # if: ${{ github.event.pull_request.merged }}
     strategy:
       matrix:
         os: [macos-latest, windows-latest]
@@ -29,13 +29,23 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pyqt5
+        
     - name: Build EXE from Python Script
       uses: Nuitka/Nuitka-Action@v0.4
       with:
         script-name: interface.py
         enable-plugins: pyqt5
-
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ runner.os }} Build
+        path: |
+          build/*.exe
+          build/*.bin
+          build/*.app/**/*
