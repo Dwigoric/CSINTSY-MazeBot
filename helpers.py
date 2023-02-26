@@ -160,5 +160,8 @@ def start_goal_distances(maze):
             else:
                 distances[row_idx][col_idx] = -1
 
-            if start and goal:
-                return start, goal, distances
+            # if start and goal:
+                # return start, goal, distances
+
+    # Placed outside of the loop to avoid prematurely returning            
+    return start, goal, distances
