@@ -45,6 +45,7 @@ class MazeBot(QWidget):
         super().__init__()
         self.setWindowTitle('Maze Bot')
         self.setFixedWidth(720)
+        self.setFixedHeight(720)
 
         self.size = None
         self.fileName = None
@@ -171,5 +172,5 @@ class MazeBot(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     mazeBot = MazeBot()
-    mazeBot.show()
+    mazeBot.showMaximized()
     sys.exit(app.exec_())
