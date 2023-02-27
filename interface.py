@@ -63,8 +63,8 @@ class MazeBot(QWidget):
         self.slider_label = QLabel("Traverse Speed")
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
-        self.slider.setMaximum(5000)
-        self.slider.setValue(5000)
+        self.slider.setMaximum(3000)
+        self.slider.setValue(3000)
 
         hbox.addWidget(self.openTextFileButton)
         hbox.addWidget(self.startButton)
@@ -172,7 +172,7 @@ class MazeBot(QWidget):
         self.fileName = None
         self.txtMaze = None
         self.start, self.goal = None, None
-        self.slider.setValue(5000)
+        self.slider.setValue(3000)
 
         # Remove the old grid
         if self.vbox.count() > 1:
@@ -223,12 +223,12 @@ class MazeBot(QWidget):
 
     def changeTraverseSpeed(self, value):
         """
-        Changes the speed of the node traversal (slowest speed is 5000ms)
+        Changes the speed of the node traversal (slowest speed is 3000ms)
 
         Input: 
         - value - the value of the slider
         """
-        self.traverseSpeed = 5000 - value
+        self.traverseSpeed = 3000 - value
 
     def stepFind(self):
         if self.path_list is None:
