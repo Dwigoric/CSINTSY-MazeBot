@@ -1,5 +1,6 @@
 import sys
-
+import queue
+import threading
 from PyQt5.QtWidgets import QMessageBox, QApplication, QLabel, QSlider, QFileDialog, QWidget, QGridLayout, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy
 from PyQt5.QtGui import QPainter, QColor, QBrush, QFont
 from PyQt5.QtCore import Qt, QTimer
@@ -45,7 +46,7 @@ class MazeBot(QWidget):
         self.setWindowTitle('Maze Bot')
         self.setFixedWidth(720)
         self.setFixedHeight(720)
-        
+
         self.size = None
         self.fileName = None
         self.txtMaze = None
@@ -54,34 +55,28 @@ class MazeBot(QWidget):
         self.start, self.goal = None, None
         self.traverseSpeed = 100
 
-        """
-        Create buttons and add them to the layout
-        """
         hbox = QHBoxLayout()
-        openTextFileButton = QPushButton('Open Text File')
-        startButton = QPushButton('Start')
-        stepButton = QPushButton('Step')
+        self.openTextFileButton = QPushButton('Open Text File')
+        self.startButton = QPushButton('Start')
+        self.stepButton = QPushButton('Step')
 
-        slider_label = QLabel("Traverse Speed")
-        slider = QSlider(Qt.Horizontal)
-        slider.setMinimum(0)
-        slider.setMaximum(5000)
-        slider.setValue(5000)
+        self.slider_label = QLabel("Traverse Speed")
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(5000)
+        self.slider.setValue(5000)
 
-        hbox.addWidget(openTextFileButton)
-        hbox.addWidget(startButton)
-        hbox.addWidget(stepButton)
-        hbox.addWidget(slider_label)
-        hbox.addWidget(slider)
+        hbox.addWidget(self.openTextFileButton)
+        hbox.addWidget(self.startButton)
+        hbox.addWidget(self.stepButton)
+        hbox.addWidget(self.slider_label)
+        hbox.addWidget(self.slider)
 
-        openTextFileButton.clicked.connect(self.openFileNameDialog)
-        startButton.clicked.connect(self.startFind)
-        slider.valueChanged.connect(self.changeTraverseSpeed)
-        stepButton.clicked.connect(self.stepFind)
+        self.openTextFileButton.clicked.connect(self.openFileNameDialog)
+        self.startButton.clicked.connect(self.startFind)
+        self.stepButton.clicked.connect(self.stepFind)
+        self.slider.valueChanged.connect(self.changeTraverseSpeed)
 
-        """
-        Create the layout and add the buttons
-        """
         self.vbox = QVBoxLayout()
         self.vbox.addLayout(hbox)
         self.vbox.setAlignment(Qt.AlignTop)
@@ -101,7 +96,6 @@ class MazeBot(QWidget):
             square.setMinimumSize(size // self.size, size // self.size)
 
         self.update()
-    
 
     def createGrid(self):
         """
@@ -127,7 +121,6 @@ class MazeBot(QWidget):
 
         self.vbox.addLayout(grid)
 
-    
     def update_colors(self):
         """
         Timer function to update the colors of the optimal path
@@ -135,7 +128,7 @@ class MazeBot(QWidget):
         self.color_index = 0
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_square_color)
-        self.timer.start(self.traverseSpeed)  
+        self.timer.start(self.traverseSpeed)
 
     def update_square_color(self):
         """
@@ -143,6 +136,7 @@ class MazeBot(QWidget):
         """
         if self.color_index >= len(self.path_list):
             self.timer.stop()
+            self.openTextFileButton.setEnabled(True)
             return
 
         coord = self.path_list[self.color_index]
@@ -158,8 +152,8 @@ class MazeBot(QWidget):
             square.update()
 
         self.color_index += 1
+        QApplication.processEvents()
 
-    
     def addDistancesText(self):
         """
         Add the distances of each square from the goal
@@ -169,7 +163,21 @@ class MazeBot(QWidget):
                 square = self.findChild(Square, f'square{i * self.size + j}')
                 square.set_text(str(self.distances[i][j]))
 
-    
+    def resetMaze(self):
+        """
+        Reset the maze
+        """
+        self.distances = None
+        self.path_list = None
+        self.fileName = None
+        self.txtMaze = None
+        self.start, self.goal = None, None
+        self.slider.setValue(5000)
+
+        # Remove the old grid
+        if self.vbox.count() > 1:
+            self.vbox.layout().removeItem(self.vbox.itemAt(1))
+
     def openFileNameDialog(self):
         """
         Opens a file dialog to select a text file
@@ -181,31 +189,37 @@ class MazeBot(QWidget):
 
         if fileName:
             # Reset the maze
-            self.distances = None
-            self.path_list = None
-            self.fileName = fileName
-            self.txtMaze = None
-            self.start, self.goal = None, None
-
-            # Remove the old grid
-            if self.vbox.count() > 1:
-                self.vbox.layout().removeItem(self.vbox.itemAt(1))
+            self.resetMaze()
 
             # Read the new maze and set variables
             self.size, self.txtMaze = read_maze(fileName)
-            self.start, self.goal, self.distances = start_goal_distances(self.txtMaze)
-            self.distances = flood_fill(self.txtMaze, self.goal, self.distances)
+            self.start, self.goal, self.distances = start_goal_distances(
+                self.txtMaze)
+            self.distances = flood_fill(
+                self.txtMaze, self.goal, self.distances)
+
             self.createGrid()
             self.addDistancesText()
 
-    
+            # Check if goal is reachable
+            if self.distances[self.start[0]][self.start[1]] == -1:
+                self.showNoGoalMessage()
+                self.startButton.setEnabled(False)
+                self.stepButton.setEnabled(False)
+                self.slider.setEnabled(False)
+                return
+            else:
+                self.startButton.setEnabled(True)
+                self.stepButton.setEnabled(True)
+                self.slider.setEnabled(True)
+
     def startFind(self):
         """
         Start the path finding algorithm
         """
+        self.openTextFileButton.setEnabled(False)
         self.path_list = find_path(self.txtMaze, self.start, self.goal)
         self.update_colors()
-
 
     def changeTraverseSpeed(self, value):
         """
@@ -237,18 +251,30 @@ class MazeBot(QWidget):
                 square.update()
 
         else:
-            self.showMessage()
-    
-    def showMessage(self):
+            self.showGoalMessage()
+
+    def showGoalMessage(self):
         message = QMessageBox()
 
         message.setIcon(QMessageBox.Information)
         message.setWindowTitle("Goal Reached!")
-        message.setText("Goal has been reached! Reset the maze by selecting a new text file.")
+        message.setText(
+            "Goal has been reached! Reset the maze by selecting a new text file.")
         message.setStandardButtons(QMessageBox.Ok)
 
         message.exec_()
-        
+
+    def showNoGoalMessage(self):
+        message = QMessageBox()
+
+        message.setIcon(QMessageBox.Information)
+        message.setWindowTitle("Goal cannot be reached!")
+        message.setText(
+            "The goal cannot be reached in this maze! Reset the maze by selecting a new text file.")
+        message.setStandardButtons(QMessageBox.Ok)
+
+        message.exec_()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
