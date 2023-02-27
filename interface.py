@@ -137,6 +137,7 @@ class MazeBot(QWidget):
         if self.color_index >= len(self.path_list):
             self.timer.stop()
             self.openTextFileButton.setEnabled(True)
+            self.showGoalMessage()
             return
 
         coord = self.path_list[self.color_index]
@@ -152,7 +153,6 @@ class MazeBot(QWidget):
             square.update()
 
         self.color_index += 1
-        QApplication.processEvents()
 
     def addDistancesText(self):
         """
