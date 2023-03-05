@@ -15,7 +15,7 @@ def read_maze(filename):
 
     with open(filename) as f:
         size = f.readline()
-        txtMaze = [[*line] for line in f]
+        txtMaze = [line.rstrip('\n') for line in f]
 
     return int(size), txtMaze
 
