@@ -35,7 +35,7 @@ jobs:
     - name: Build EXE from Python Script
       uses: Nuitka/Nuitka-Action@v0.4
       with:
-        script-name: interface.py
+        script-name: main.py
         enable-plugins: pyqt5
         
     - name: Upload Artifacts
