@@ -4,16 +4,14 @@
 name: Python executable
 
 on:
-  pull_request:
-    types:
-      - closed
+  push:
+    branches: "**"
 
 permissions:
   contents: read
 
 jobs:
   build:
-    if: ${{ github.event.pull_request.merged }}
     strategy:
       matrix:
         os: [macos-latest, windows-latest]
