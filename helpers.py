@@ -20,12 +20,12 @@ def read_maze(filename):
     return int(size), txtMaze
 
 
-def find_path(maze, start, goal):
+def find_path(distances, start, goal):
     """
-    Finds the shortest path from start to goal in the maze
+    Finds the shortest path from start to goal in the maze using greedy best-first search
 
     Inputs:
-    - maze: a 2D list of characters representing the maze
+    - distances: a 2D list of integers representing the distance from the goal
     - start: a tuple representing the start location
     - goal: a tuple representing the goal location
 
@@ -33,37 +33,51 @@ def find_path(maze, start, goal):
     - path_list: a list of tuples representing the path from start to goal
     """
 
-    q = Queue()
-    q.put(start)
+    path_list = []
+    curr = start
 
-    visited = set()
-    visited.add(start)
-
-    path = {}
-    path[start] = None
-
-    while not q.empty():
-        curr = q.get()
-
-        if curr == goal:
-            break
-
-        for neighbor in get_neighbors(curr, maze):
-            if neighbor not in visited:
-                q.put(neighbor)
-                visited.add(neighbor)
-                path[neighbor] = curr
-
-    curr = goal
-    path_list = [curr]
-
-    while curr != start:
-        curr = path[curr]
+    while curr != goal:
         path_list.append(curr)
 
-    path_list.reverse()
+        next_states = get_next_states(distances, curr)
+        if len(next_states) == 0:
+            return None
+
+        curr = min(next_states, key=lambda x: distances[x[0]][x[1]])
+
+    path_list.append(goal)
 
     return path_list
+
+
+def get_next_states(distances, current):
+    """
+    Finds the next states from the current state
+
+    Inputs:
+    - distances: a 2D list of integers representing the distance from the goal
+    - current: a tuple representing the current state
+
+    Returns:
+    - next_states: a list of tuples representing the next states
+    """
+
+    next_states = []
+    row, col = current
+
+    if row > 0 and distances[row - 1][col] >= 0:
+        next_states.append((row - 1, col))
+
+    if row < len(distances) - 1 and distances[row + 1][col] >= 0:
+        next_states.append((row + 1, col))
+
+    if col > 0 and distances[row][col - 1] >= 0:
+        next_states.append((row, col - 1))
+
+    if col < len(distances[0]) - 1 and distances[row][col + 1] >= 0:
+        next_states.append((row, col + 1))
+
+    return next_states
 
 
 def flood_fill(txt_maze, goal, distances):

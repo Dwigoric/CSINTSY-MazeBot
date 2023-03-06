@@ -218,7 +218,7 @@ class MazeBot(QWidget):
         Start the path finding algorithm
         """
         self.openTextFileButton.setEnabled(False)
-        self.path_list = find_path(self.txtMaze, self.start, self.goal)
+        self.path_list = find_path(self.distances, self.start, self.goal)
         self.update_colors()
 
     def changeTraverseSpeed(self, value):
@@ -232,7 +232,7 @@ class MazeBot(QWidget):
 
     def stepFind(self):
         if self.path_list is None:
-            self.path_list = find_path(self.txtMaze, self.start, self.goal)
+            self.path_list = find_path(self.distances, self.start, self.goal)
 
         """
         Step through the node traversal
